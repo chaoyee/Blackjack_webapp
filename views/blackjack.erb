@@ -1,0 +1,36 @@
+<h3>Hi! <%=session[:username]%>, Welcome to the Blackjack game!</h3>  
+
+<div class="well">
+<h4>Dealer's cards :</h4>
+<ul>
+  <% session[:dealer_cards].each do |card| %>
+    <li><%= card[0] + ' ' + card[1] + ',' %></li>
+  <% end %>
+</ul>
+</div>
+
+</br>
+
+<div class="well">
+<h4>Player's cards :</h4>
+<ul>
+  <% session[:player_cards].each do |card| %>
+    <li><%= card[0] + ' ' + card[1] + ',' %></li>
+  <% end %>
+</ul>
+</div>
+
+<p>
+  You have <%= calculate_sum(session[:player_cards]) %>, what would you like to do? 
+</br>
+
+<% if @show_button %>
+  <form id="hit_form" action="/blackjack/player/hit" method="post">
+    <input type="submit" class="btn btn-success" value="Hit" />
+  </form>
+  <form id="stay_form" action="/blackjack/player/stay" method="post">
+    <input type="submit" class="btn btn-warning" value="Stay" />
+  </form>
+<% end %>
+
+</p>
