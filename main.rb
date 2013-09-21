@@ -5,6 +5,7 @@ set :sessions, true
 
 BLACKJACK_AMOUNT = 21
 DEALER_MIN_HIT = 17
+INITIAL_PLAYER_POT =500
 
 # Blackjack game web app.
 
@@ -36,13 +37,22 @@ helpers do
   def win_msg(msg)
     @show_play_again = true
     @show_button = false
+    session[:player_pot] = session[:player_pot] + session[:player_bet]
     @success = "<strong>#{msg} #{session[:username]} won at #{calculate_sum(session[:player_cards])} and dealer at #{calculate_sum(session[:dealer_cards])}.</strong>"
   end
 
   def loose_msg(msg)
     @show_play_again = true
     @show_button = false
-    @error = "<strong>#{msg} dealer won at #{calculate_sum(session[:dealer_cards])} and #{session[:username]} at #{calculate_sum(session[:player_cards])}.</strong>"
+    session[:player_pot] = session[:player_pot] - session[:player_bet]
+    
+    # if player pot is 0, the game must be over and restart again.
+    if session[:player_pot] == 0   
+      @error = "<strong>#{msg}  Dealer won at #{calculate_sum(session[:dealer_cards])} and #{session[:username]} at #{calculate_sum(session[:player_cards])}.</strong>" + "<strong>  And have nothing to bet! Please restart the game!<strong>"
+      halt erb :bye
+    else
+      @error = "<strong>#{msg}  Dealer won at #{calculate_sum(session[:dealer_cards])} and #{session[:username]} at #{calculate_sum(session[:player_cards])}.</strong>"
+    end  
   end
 
   def tie_msg(msg)
@@ -68,6 +78,7 @@ get '/' do
 end
 
 get '/get_name' do
+  session[:player_pot] = INITIAL_PLAYER_POT
   erb :get_name
 end
 
@@ -77,8 +88,31 @@ post '/get_name' do
     halt erb :get_name
   end  
   session[:username] = params[:username]
-  redirect '/blackjack'
+  redirect '/bet'
 end
+
+get '/bet' do
+  session[:player_bet] = nil
+  erb :bet
+end
+
+post '/bet' do
+  if session[:player_pot] == 0
+    @error="<strong>#{session[:username]} has nothing to bet, please restart a new game!</strong>"
+    halt erb :get_name
+  end    
+  if params[:bet_amt].nil? || params[:bet_amt].to_i == 0
+    @error="<strong>The bet amount is nothing, please make a new bet!</strong>"
+    halt erb :bet
+  elsif params[:bet_amt].to_i > session[:player_pot]
+    @error="<strong>The bet amount can not larger than #{session[:player_pot]}, please make a new bet!</strong>"
+    halt erb :bet
+  else  
+    session[:player_bet] = params[:bet_amt].to_i
+    redirect '/blackjack'
+  end  
+end
+
 
 get '/blackjack' do                # Blackjack main web page
   session[:turn] = session[:username]
@@ -92,8 +126,7 @@ get '/blackjack' do                # Blackjack main web page
   end  
   session[:deck] =  deck_temp.shuffle!
 
-  # deal cards
-  
+  # deal cards 
   session[:dealer_cards] = []
   session[:player_cards] = []
   session[:dealer_cards] << session[:deck].pop
@@ -121,7 +154,6 @@ end
 
 post '/blackjack/player/stay' do
   @success = "#{session[:username]} stay!"
-  #@show_button = false
   redirect '/blackjack/dealer'
 end
 
@@ -146,13 +178,11 @@ get '/blackjack/dealer' do
 end
 
 post '/blackjack/dealer/hit' do
-  # @show_button = false
   session[:dealer_cards] << session[:deck].pop
   redirect '/blackjack/dealer'
 end
 
 get '/blackjack/compare' do
-  # @show_button = false
   player_total = calculate_sum(session[:player_cards])
   dealer_total = calculate_sum(session[:dealer_cards])
 

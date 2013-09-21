@@ -2,9 +2,9 @@
   <h3>Hi! <%=session[:username]%>, Welcome to the Blackjack game!</h3> 
   <h4>
     <% if @show_play_again %>   
-      <strong>Would you like to play again?</strong>
-      <a href='/blackjack' class='btn btn-primary'>Yes</a>
-      <a href='/bye' class='btn'>No</a>  
+      <strong>Would you like to play again?  </strong>
+      <a href='/bet' class='btn btn-primary'>Yes</a>
+      <a href='/bye' class='btn'>No</a>        
     <% end %>
   </h4>
 </p>
@@ -42,7 +42,7 @@
 </div>
 
 
-<h4><%=session[:username]%> has <%= calculate_sum(session[:player_cards]) %><h4>
+<h4><%=session[:username]%> has <%= calculate_sum(session[:player_cards]) %>, remained $<%= session[:player_pot]%> in the pot and bet $<%=session[:player_bet]%> this round.<h4>
 <br/>
 
 <% if @show_button %>
